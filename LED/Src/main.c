@@ -23,11 +23,10 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
-#include "modbus_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "modbus_host.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +58,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+u8 RXdata = 0;
 /* USER CODE END 0 */
 
 /**
@@ -91,9 +90,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM3_Init();
   MX_UART4_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  HAL_UART_Receive_IT(&huart4, &RXdata, 1);
 
   /* USER CODE END 2 */
 
@@ -102,10 +102,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-//	printf("asdf\r\n");
-//	HAL_Delay(1234);
+
     /* USER CODE BEGIN 3 */
-	MODH_Poll();
+//	MODH_Poll();
 	uint8_t buf[6];
 						
 	buf[0] = 0x00;
@@ -115,11 +114,18 @@ int main(void)
 	buf[4] = 0x00;
 	buf[5] = 0x06;  
 	u16 reg = 0x0001;
-	if (MODH_WriteParam_10H(reg, 3, buf) == 1) ;else ;   //寄存器起始地址 寄存器个数 数据（每个寄存器两个字节，高位在前）
-	HAL_Delay(1234);  
+	volatile int temp = 0;
+//	if (MODH_WriteParam_10H(reg, 3, buf) == 1) 
+//		temp++;
+//	else ;   //寄存器起始地址 寄存器个数 数据（每个寄存器两个字节，高位在前）
+	
+	if (MODH_ReadParam_03H(REG_P01, 3) == 1) 
+		temp++;
+	else ;
+
+	HAL_Delay(10);  
 	  
-	  
-	  
+ 	  
   }
   /* USER CODE END 3 */
 }

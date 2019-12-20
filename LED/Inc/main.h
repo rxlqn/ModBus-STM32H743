@@ -37,7 +37,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+extern u8 RXdata;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

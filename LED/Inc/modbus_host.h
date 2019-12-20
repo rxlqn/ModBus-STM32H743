@@ -35,7 +35,7 @@
 /* 03H 读保持寄存器 */
 /* 06H 写保持寄存器 */
 /* 10H 写多个保存寄存器 */
-#define REG_P01		0x0301		
+#define REG_P01		0x0001		
 #define REG_P02		0x0302	
 
 /* 04H 读取输入寄存器(模拟信号) */
@@ -111,7 +111,7 @@ uint8_t MODH_ReadParam_04H(uint16_t _reg, uint16_t _num);
 uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf);
-
+void MODH_RxTimeOut(void);
 extern MODH_T g_tModH;
 
 

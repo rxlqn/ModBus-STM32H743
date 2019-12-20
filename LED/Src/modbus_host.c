@@ -16,7 +16,7 @@
 
 #include "modbus_host.h"
 #include "usart.h"
-
+#include "tim.h"
 #define TIMEOUT		100		/* 接收命令超时时间, 单位ms */
 #define NUM			1		/* 循环发送次数 */
 
@@ -25,7 +25,7 @@
 MODH_T g_tModH;
 uint8_t g_modh_timeout = 0;
 
-static void MODH_RxTimeOut(void);
+//static void MODH_RxTimeOut(void);
 static void MODH_AnalyzeApp(void);
 
 static void MODH_Read_01H(void);
@@ -265,6 +265,7 @@ static void MODH_SendAckWithCRC(void)
 */
 static void MODH_AnalyzeApp(void)
 {	
+
 	switch (g_tModH.RxBuf[1])			/* 第2个字节 功能码 */
 	{
 		case 0x01:	/* 读取线圈状态 */
@@ -498,32 +499,32 @@ void MODH_Send10H(uint8_t _addr, uint16_t _reg, uint8_t _num, uint8_t *_buf)
 *	返 回 值: 1 表示有数据
 *********************************************************************************************************
 */
-//void MODH_ReciveNew(uint8_t _data)
-//{
-//	/*
-//		3.5个字符的时间间隔，只是用在RTU模式下面，因为RTU模式没有开始符和结束符，
-//		两个数据包之间只能靠时间间隔来区分，Modbus定义在不同的波特率下，间隔时间是不一样的，
-//		所以就是3.5个字符的时间，波特率高，这个时间间隔就小，波特率低，这个时间间隔相应就大
+void MODH_ReciveNew(uint8_t _data)
+{
+	/*
+		3.5个字符的时间间隔，只是用在RTU模式下面，因为RTU模式没有开始符和结束符，
+		两个数据包之间只能靠时间间隔来区分，Modbus定义在不同的波特率下，间隔时间是不一样的，
+		所以就是3.5个字符的时间，波特率高，这个时间间隔就小，波特率低，这个时间间隔相应就大
 
-//		4800  = 7.297ms
-//		9600  = 3.646ms
-//		19200  = 1.771ms
-//		38400  = 0.885ms
-//	*/
-//	uint32_t timeout;
+		4800  = 7.297ms
+		9600  = 3.646ms
+	**	19200  = 1.771ms
+		38400  = 0.885ms
+	*/
+	uint32_t timeout;
 
-//	g_modh_timeout = 0;
-//	
-//	timeout = 35000000 / HBAUD485;		/* 计算超时时间，单位us 35000000*/
-//	
-//	/* 硬件定时中断，定时精度us 硬件定时器2用于MODBUS从机, 定时器3用于MODBUS从机主机*/
-//	bsp_StartHardTimer(3, timeout, (void *)MODH_RxTimeOut);
-
-//	if (g_tModH.RxCount < H_RX_BUF_SIZE)
-//	{
-//		g_tModH.RxBuf[g_tModH.RxCount++] = _data;
-//	}
-//}
+	g_modh_timeout = 0;
+	
+//	HAL_TIM_Base_Start_IT(&htim2);
+	/* 硬件定时中断，定时精度us 硬件定时器2用于MODBUS从机, 定时器3用于MODBUS从机主机*/		
+	// 波特率19200 硬件定时1.771ms,定时器中断中调用MODH_RxTimeOut函数
+	
+    
+	if (g_tModH.RxCount < H_RX_BUF_SIZE)
+	{
+		g_tModH.RxBuf[g_tModH.RxCount++] = RXdata;
+	}
+}
 
 /*
 *********************************************************************************************************
@@ -533,7 +534,7 @@ void MODH_Send10H(uint8_t _addr, uint16_t _reg, uint8_t _num, uint8_t *_buf)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-static void MODH_RxTimeOut(void)
+ void MODH_RxTimeOut(void)
 {
 	g_modh_timeout = 1;
 }
@@ -549,12 +550,14 @@ static void MODH_RxTimeOut(void)
 void MODH_Poll(void)
 {	
 	uint16_t crc1;
+
 	
-	if (g_modh_timeout == 0)	/* 超过3.5个字符时间后执行MODH_RxTimeOut()函数。全局变量 g_rtu_timeout = 1 */
-	{
-		/* 没有超时，继续接收。不要清零 g_tModH.RxCount */
-		return ;
-	}
+// 暂时不处理超时
+//	if (g_modh_timeout == 0)	/* 超过3.5个字符时间后执行MODH_RxTimeOut()函数。全局变量 g_rtu_timeout = 1 */
+//	{
+//		/* 没有超时，继续接收。不要清零 g_tModH.RxCount */
+//		return ;
+//	}
 
 	/* 收到命令
 		05 06 00 88 04 57 3B70 (8 字节)
@@ -566,10 +569,11 @@ void MODH_Poll(void)
 	*/
 	g_modh_timeout = 0;
 
-	if (g_tModH.RxCount < 4)
+	if (g_tModH.RxCount < 11)  //5+3*2 3个寄存器
 	{
-		goto err_ret;
+		return ;
 	}
+	
 
 	/* 计算CRC校验和 */
 	crc1 = CRC16_Modbus(g_tModH.RxBuf, g_tModH.RxCount);
@@ -749,8 +753,8 @@ void MODH_Read_03H(void)
 		bytes = g_tModH.RxBuf[2];	/* 数据长度 字节数 */				
 		switch (g_tModH.Reg03H)
 		{
-			case REG_P01:
-				if (bytes == 32)
+			case REG_P01:			//分寄存器处理数据
+				if (bytes == 0x06)   // 字节数
 				{
 					p = &g_tModH.RxBuf[3];	
 					
@@ -863,11 +867,12 @@ uint8_t MODH_ReadParam_02H(uint16_t _reg, uint16_t _num)
 		
 		while (1)
 		{
+			HAL_Delay(10);
 			MODH_Poll();
 
 			if (bsp_CheckRunTime(time1) > TIMEOUT)		
 			{
-				break;		/* 通信超时了 */
+				break;		/* 通信超时了 */  //100ms 防止卡死
 			}
 			
 			if (g_tModH.fAck02H > 0)
@@ -876,10 +881,10 @@ uint8_t MODH_ReadParam_02H(uint16_t _reg, uint16_t _num)
 			}
 		}
 		
-		if (g_tModH.fAck02H > 0)
-		{
-			break;
-		}
+//		if (g_tModH.fAck02H > 0)
+//		{
+//			break;
+//		}
 	}
 	
 	if (g_tModH.fAck02H == 0)
@@ -911,10 +916,13 @@ uint8_t MODH_ReadParam_03H(uint16_t _reg, uint16_t _num)
 		
 		while (1)
 		{
+
 			MODH_Poll();
 
 			if (bsp_CheckRunTime(time1) > TIMEOUT)		
 			{
+				g_tModH.RxCount = 0;	/* 必须清零计数器，方便下次帧同步 */
+
 				break;		/* 通信超时了 */
 			}
 			
@@ -924,10 +932,10 @@ uint8_t MODH_ReadParam_03H(uint16_t _reg, uint16_t _num)
 			}
 		}
 		
-		if (g_tModH.fAck03H > 0)
-		{
-			break;
-		}
+//		if (g_tModH.fAck03H > 0)
+//		{
+//			break;
+//		}
 	}
 	
 	if (g_tModH.fAck03H == 0)

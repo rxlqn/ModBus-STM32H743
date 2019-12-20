@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=C:/Users/rxlqn/Desktop/Graduation/modbus/LED/Inc
+HeaderPath=C:/Users/rxlqn/Desktop/Graduation/modbus/my_Modbus/LED/Inc
 HeaderFiles=gpio.h;stm32h7xx_it.h;stm32h7xx_hal_conf.h;main.h;adc.h;dma.h;tim.h;FreeRTOSConfig.h;usart.h;
-SourcePath=C:/Users/rxlqn/Desktop/Graduation/modbus/LED/Src
+SourcePath=C:/Users/rxlqn/Desktop/Graduation/modbus/my_Modbus/LED/Src
 SourceFiles=gpio.c;stm32h7xx_it.c;stm32h7xx_hal_msp.c;main.c;adc.c;dma.c;tim.c;freertos.c;stm32h7xx_hal_timebase_tim.c;usart.c;
 
 [PreviousLibFiles]
