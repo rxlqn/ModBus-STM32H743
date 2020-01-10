@@ -17,6 +17,7 @@
 #include "modbus_host.h"
 #include "usart.h"
 #include "tim.h"
+#include "string.h"
 #define TIMEOUT		500		/* 接收命令超时时间, 单位ms */
 #define NUM			1		/* 循环发送次数 */
 
@@ -357,6 +358,7 @@ void MODH_Send10H(uint8_t _addr, uint16_t _reg, uint8_t _num, uint8_t* _buf)
         }
         g_tModH.TxBuf[g_tModH.TxCount++] = _buf[i];		/* 后面的数据长度 */
     }
+    g_tModH.fAck10H = 0;		/* 清接收标志 */
 
     MODH_SendAckWithCRC();	/* 发送数据，自动加CRC */
 }
@@ -540,8 +542,8 @@ uint8_t MODH_ReadParam_03H(uint16_t _reg, uint16_t _num)
 
     // 超时或者接收完成
     g_tModH.RxCount = 0;	/* 必须清零计数器，方便下次帧同步 */
+    memset(g_tModH.RxBuf,0,256);	// 接收缓冲区清0
 	HAL_UART_Receive_IT(&huart4, &RXdata, 1);	 // 重新打开串口接收，我也不知道为什么他会自己关闭
-
 
     if(g_tModH.fAck03H == 0)
     {
@@ -586,12 +588,15 @@ uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t* _buf)
             }
         }
 
-        if(g_tModH.fAck10H > 0)
-        {
-            break;
-        }
     }
 
+	
+    // 超时或者接收完成
+    g_tModH.RxCount = 0;	/* 必须清零计数器，方便下次帧同步 */
+    memset(g_tModH.RxBuf,0,256);	// 接收缓冲区清0
+	
+	HAL_UART_Receive_IT(&huart4, &RXdata, 1);	 // 重新打开串口接收，我也不知道为什么他会自己关闭
+	
     if(g_tModH.fAck10H == 0)
     {
         return 0;	/* 通信超时了 */

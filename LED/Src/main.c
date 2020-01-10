@@ -48,7 +48,9 @@
 
 /* USER CODE BEGIN PV */
 u16 receive[64];
+uint8_t buf[6];
 
+ 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,6 +98,15 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_IT(&huart4, &RXdata, 1);
 
+
+
+
+	buf[0] = 0x00;
+	buf[1] = 0x04;
+	buf[2] = 0x00;
+	buf[3] = 0x05;
+	buf[4] = 0x00;
+	buf[5] = 0x06; 
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -106,20 +117,13 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	uint8_t buf[6];
-
-	  
-	buf[0] = 0x00;
-	buf[1] = 0x04;
-	buf[2] = 0x00;
-	buf[3] = 0x05;
-	buf[4] = 0x00;
-	buf[5] = 0x06;  
-	u16 reg = 0x0001;
 	volatile int temp = 0;
-//	if (MODH_WriteParam_10H(reg, 3, buf) == 1) 
-//		temp++;
-//	else ;   //寄存器起始地址 寄存器个数 数据（每个寄存器两个字节，高位在前）
+	  
+	if (MODH_WriteParam_10H(0, 3, buf) == 1) 
+		temp++;
+	else ;      	// 寄存器起始地址 寄存器个数 数据（每个寄存器两个字节，高位在前）
+	
+
 	
 	if (MODH_ReadParam_03H(0, 64) == 1)   // 从0寄存器开始读64个  从站地址0x01
 		temp++;
