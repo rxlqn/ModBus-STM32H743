@@ -47,6 +47,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+u16 receive[64];
 
 /* USER CODE END PV */
 
@@ -104,9 +105,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	MODH_Poll();
+
 	uint8_t buf[6];
-						
+
+	  
 	buf[0] = 0x00;
 	buf[1] = 0x04;
 	buf[2] = 0x00;
@@ -119,11 +121,11 @@ int main(void)
 //		temp++;
 //	else ;   //寄存器起始地址 寄存器个数 数据（每个寄存器两个字节，高位在前）
 	
-	if (MODH_ReadParam_03H(REG_P01, 3) == 1) 
+	if (MODH_ReadParam_03H(0, 64) == 1)   // 从0寄存器开始读64个  从站地址0x01
 		temp++;
 	else ;
 
-	HAL_Delay(10);  
+//	HAL_Delay(10);  
 	  
  	  
   }
